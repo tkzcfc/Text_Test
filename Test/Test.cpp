@@ -68,7 +68,7 @@ int main()
 	// 描边宽度
 	int strokeSize = 5;
 
-	int dataLen = 0;
+	size_t dataLen = 0;
 
 	auto data = FancyText::Render("在 NONE 模式下，尺寸为 (0,0)，内容大小将动态更改以适合标签。",
 		"Arial", 
