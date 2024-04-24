@@ -48,9 +48,20 @@ enum StringFormatFlags
     NoClip = 0x4000
 };
 
+typedef void* (*MallocPtr)(size_t);
+
+
+static MallocPtr gMallocPtr = 0;
+
 namespace FancyText
 {
-    DLLEXPORT unsigned char* Render(const char* text,
+
+    DLLEXPORT void SetMallocCallback(void* (*callback)(size_t))
+    {
+        gMallocPtr = callback;
+    }
+
+    DLLEXPORT unsigned char* Render(const wchar_t* text,
         const char* fontName,
         int fontSize,
         int fontStyle,
@@ -108,7 +119,10 @@ namespace FancyText
         }
         pin_ptr<System::Byte> pinnedArray = &bytes[0];
 
-        auto data = (unsigned char*)malloc(bytes->Length);
+        if (gMallocPtr == 0)
+            gMallocPtr = malloc;
+
+        auto data = (unsigned char*)gMallocPtr(bytes->Length);
         memcpy(data, pinnedArray, bytes->Length);
 
         return data;

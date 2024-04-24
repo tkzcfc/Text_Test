@@ -1,4 +1,4 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include <fstream>
 #include "../FancyTextToCppBridge/FancyText.h"
 
@@ -18,7 +18,7 @@ inline int argbToInt(unsigned char alpha, unsigned char red, unsigned char green
 }
 
 /// <summary>
-/// cocos ¶¨Òå
+/// cocos å®šä¹‰
 /// </summary>
 enum Overflow
 {
@@ -54,30 +54,30 @@ enum TextAlign
 
 int main()
 {
-	// ¿í¶ÈÏŞÖÆ
+	// å®½åº¦é™åˆ¶
 	int dimensionsWidth = 200;
-	// ¸ß¶ÈÏŞÖÆ
+	// é«˜åº¦é™åˆ¶
 	int dimensionsHeight = 0;
-	// Òç³ö´¦Àí
+	// æº¢å‡ºå¤„ç†
 	int overflow = Overflow::SHRINK;
-	// ÊÇ·ñÔÊĞí×Ô¶¯»»ĞĞ
+	// æ˜¯å¦å…è®¸è‡ªåŠ¨æ¢è¡Œ
 	bool enableWrap = true;
-	// ×ÖÌå´óĞ¡
+	// å­—ä½“å¤§å°
 	int fontSize = 20;
 
-	// Ãè±ß¿í¶È
+	// æè¾¹å®½åº¦
 	int strokeSize = 5;
 
 	size_t dataLen = 0;
 
-	auto data = FancyText::Render("ÔÚ NONE Ä£Ê½ÏÂ£¬³ß´çÎª (0,0)£¬ÄÚÈİ´óĞ¡½«¶¯Ì¬¸ü¸ÄÒÔÊÊºÏ±êÇ©¡£",
+	auto data = FancyText::Render(L"ç®€ä½“ä¸­æ–‡ ç¹é«”ä¸­æ–‡ Bahasa Indonesia Tiáº¿ng Viá»‡t á€—á€™á€¬á€…á€¬ à¤¹à¤¿à¤¨à¥à¤¦à¥€ í•œêµ­ì–´ EspaÃ±ol PortuguÃªs dansk Ğ±ÑŠĞ»Ğ³Ğ°Ñ€ÑĞºĞ¸ Nederlands Italiano Deutsch FranÃ§ais æ—¥æœ¬èª Filipino ENGLISH à¸ à¸²à¸©à¸²à¹„à¸—à¸¢ à¦¬à§‡à¦™à§à¦—à¦² å­ŸåŠ æ‹‰",
 		"Arial", 
 		fontSize,
 		FancyText::FontStyle::Bold | FancyText::FontStyle::Italic,
-		argbToInt(100, 255, 0, 0), // ÎÄ×ÖÑÕÉ«
+		argbToInt(100, 255, 0, 0), // æ–‡å­—é¢œè‰²
 		TextAlign::LEFT,
 		strokeSize,
-		argbToInt(255, 0, 255, 0), // Ãè±ßÑÕÉ«
+		argbToInt(255, 0, 255, 0), // æè¾¹é¢œè‰²
 		dimensionsWidth, 
 		dimensionsHeight,
 		overflow, 
@@ -93,7 +93,7 @@ int main()
 
 	std::string filePath = "out.png";
 	std::ofstream outputFile(filePath, std::ios::binary);
-	// ¼ì²éÎÄ¼şÊÇ·ñ³É¹¦´ò¿ª
+	// æ£€æŸ¥æ–‡ä»¶æ˜¯å¦æˆåŠŸæ‰“å¼€
 	if (!outputFile.is_open()) {
 		std::cerr << "Error: Unable to open file: " << filePath << std::endl;
 		return 1;

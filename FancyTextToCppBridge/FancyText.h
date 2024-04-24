@@ -20,7 +20,9 @@ namespace FancyText
 		Strikeout = 0x8
 	};
 
-	DLLEXPORT unsigned char* Render(const char* text,
+	DLLEXPORT void SetMallocCallback(void* (*callback)(size_t));
+
+	DLLEXPORT unsigned char* Render(const wchar_t* text,
 		const char* fontName,
 		int fontSize,
 		int fontStyle,
