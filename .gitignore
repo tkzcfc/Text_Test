@@ -3,3 +3,5 @@ FancyText/bin/
 FancyText/obj/
 FancyTextToCppBridge/x64/
 Test/x64/Debug/
+CSTest/obj/Debug/
+CSTest/bin/

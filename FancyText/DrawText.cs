@@ -3,7 +3,10 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Drawing.Text;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Windows.Controls;
+using static System.Net.Mime.MediaTypeNames;
 
 
 //enum TextAlign
@@ -55,15 +58,13 @@ namespace FancyText
         /// <param name="strokeColor"> 描边颜色 </param>
         /// <param name="dimensionsWidth"> 宽度限制 </param>
         /// <param name="dimensionsHeight"> 高度限制 </param>
-        /// <param name="formatFlags"> 溢出处理 </param>
-        public static BitmapInfo RenderText(string strText, string fontName, int fontSize, int fontStyle, int fontColor, int textAlign, int strokeSize, int strokeColor, int dimensionsWidth, int dimensionsHeight, int formatFlags)
+        /// <param name="formatFlags">  </param>
+        /// <param name="overflow"> 溢出处理 </param>
+        /// <param name="outputRawData"> 是否返回原始数据,为false时返回png格式数据 </param>
+        public static BitmapInfo RenderText(string strText, string fontName, int fontSize, int fontStyle, int fontColor, int textAlign, int strokeSize, int strokeColor, int dimensionsWidth, int dimensionsHeight, int formatFlags, int overflow, bool outputRawData)
         {
-
-            Console.WriteLine("fontNamexxx");
-            Console.WriteLine("fontName1 {0}", fontName);
             try
             {
-                Console.WriteLine("fontName2 {0}", fontName);
                 var font = new Font(fontName, fontSize, (System.Drawing.FontStyle)fontStyle);
 
                 //// 定义绘制文本的区域和格式
@@ -137,15 +138,24 @@ namespace FancyText
                 }
                 stringFormat.FormatFlags = (StringFormatFlags)formatFlags;
 
-                var bitmap = ImageFromText(strText, font, Color.FromArgb(fontColor), Color.FromArgb(strokeColor), dimensionsWidth, dimensionsHeight, strokeSize, stringFormat);
+                var bitmap = ImageFromText(strText, font, Color.FromArgb(fontColor), Color.FromArgb(strokeColor), dimensionsWidth, dimensionsHeight, strokeSize, stringFormat, overflow);
 
-                return new BitmapInfo();
-                //var bitmapInfo = new BitmapInfo();
-                //bitmapInfo.data = BitmapToRGBA(bitmap);
-                //bitmapInfo.width = bitmap.Width;
-                //bitmapInfo.height = bitmap.Height;
-
-                //return bitmapInfo;
+                var bitmapInfo = new BitmapInfo();
+                bitmapInfo.width = bitmap.Width;
+                bitmapInfo.height = bitmap.Height;
+                if (outputRawData)
+                {
+                    bitmapInfo.data = BitmapToRGBA(bitmap);
+                }
+                else 
+                {
+                    using (var stream = new MemoryStream())
+                    {
+                        bitmap.Save(stream, ImageFormat.Png); // 坑点：格式选Bmp时，不带透明度
+                        bitmapInfo.data = stream.ToArray();
+                    }
+                }
+                return bitmapInfo;
             }
             catch (Exception ex)
             {
@@ -156,34 +166,37 @@ namespace FancyText
 
         static byte[] BitmapToRGBA(Bitmap bitmap)
         {
-            // 确保位图的像素格式是32位ARGB
-            if (bitmap.PixelFormat != PixelFormat.Format32bppArgb)
+            // 确定目标图像的大小和格式
+            int width = bitmap.Width;
+            int height = bitmap.Height;
+            PixelFormat format = PixelFormat.Format32bppArgb;
+
+            // 创建一个新的 Bitmap 对象
+            Bitmap targetBitmap = new Bitmap(width, height, format);
+
+            // 使用 Graphics 对象绘制原始 Bitmap 到新 Bitmap 中
+            using (Graphics g = Graphics.FromImage(targetBitmap))
             {
-                throw new Exception("Bitmap must be in 32bppArgb format.");
+                g.DrawImage(bitmap, new Rectangle(0, 0, width, height));
             }
 
-            // 锁定位图的像素数据
-            BitmapData bitmapData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);
+            // 锁定新 Bitmap 的像素数据
+            BitmapData bmpData = targetBitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, format);
+            IntPtr ptr = bmpData.Scan0;
+            int bytes = Math.Abs(bmpData.Stride) * height;
+            byte[] result = new byte[bytes];
 
-            try
-            {
-                // 创建字节数组
-                int byteCount = bitmapData.Stride * bitmap.Height;
-                byte[] rgbaBytes = new byte[byteCount];
+            // 将像素数据复制到 byte[]
+            Marshal.Copy(ptr, result, 0, bytes);
 
-                // 将像素数据复制到字节数组中
-                Marshal.Copy(bitmapData.Scan0, rgbaBytes, 0, byteCount);
+            // 解锁 Bitmap
+            targetBitmap.UnlockBits(bmpData);
+            targetBitmap.Dispose();
 
-                return rgbaBytes;
-            }
-            finally
-            {
-                // 解锁位图的像素数据
-                bitmap.UnlockBits(bitmapData);
-            }
+            return result;
         }
 
-        private static Bitmap ImageFromText(string strText, Font fnt, Color clrFore, Color clrBack, int dimensionsWidth, int dimensionsHeight, int blurAmount, StringFormat stringFormat)
+        private static Bitmap ImageFromText(string strText, Font fnt, Color clrFore, Color clrBack, int dimensionsWidth, int dimensionsHeight, int blurAmount, StringFormat stringFormat, int overflow)
         {
             Bitmap? bmpOut = null;
             var sunNum = 255; //光晕的值
@@ -194,7 +207,13 @@ namespace FancyText
                 {
                     sz = g.MeasureString(strText, fnt, dimensionsWidth, stringFormat);
                 }
-                
+
+                // 动态调整字体大小
+                if(overflow == 2)
+                {
+                    fnt = GetAdjustedFont(g, strText, fnt, sz, stringFormat);
+                }
+
                 using (var bmp = new Bitmap((int)sz.Width, (int)sz.Height))
                 using (var gBmp = Graphics.FromImage(bmp))
                 using (var brBack = new SolidBrush(Color.FromArgb(sunNum, clrBack.R, clrBack.G, clrBack.B)))
@@ -206,11 +225,6 @@ namespace FancyText
                     gBmp.InterpolationMode = InterpolationMode.HighQualityBilinear;
                     gBmp.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
                     gBmp.DrawString(strText, fnt, brBack, layoutRect, stringFormat);
-
-                    if (blurAmount <= 0)
-                    {
-                        return bmp;
-                    }
 
                     bmpOut = new Bitmap(bmp.Width + blurAmount, bmp.Height + blurAmount);
                     using (var gBmpOut = Graphics.FromImage(bmpOut))
@@ -237,34 +251,29 @@ namespace FancyText
             return bmpOut;
         }
 
-        ///// <summary>
-        /////     文本转图片
-        ///// </summary>
-        ///// <param name="strText"></param>
-        ///// <param name="fnt"></param>
-        ///// <param name="clrFore"></param>
-        ///// <param name="clrBack"></param>
-        ///// <param name="blurAmount"></param>
-        ///// <returns></returns>
-        //public static BitmapImage BitmapImageFromText(string strText, Font fnt, Color clrFore, Color clrBack,
-        //    int blurAmount = 5) => BitmapToBitmapImage(ImageFromText(strText, fnt, clrFore, clrBack, blurAmount));
+        static Font GetAdjustedFont(Graphics graphics, string text, Font originalFont, SizeF layoutSize, StringFormat stringFormat)
+        {
+            var actualWidth = (int)layoutSize.Width + 1;
+            var actualHeight = (int)layoutSize.Height + 1;
+            var newFontSize = originalFont.Size + 1;
 
-        //private static BitmapImage BitmapToBitmapImage(Bitmap bitmap)
-        //{
-        //    using (var stream = new MemoryStream())
-        //    {
-        //        bitmap.Save(stream, ImageFormat.Png); // 坑点：格式选Bmp时，不带透明度
+            while (actualWidth > layoutSize.Width || actualHeight > layoutSize.Height)
+            {
+                if (newFontSize <= 0)
+                {
+                    newFontSize = 1;
+                    break;
+                }
 
-        //        stream.Position = 0;
-        //        var result = new BitmapImage();
-        //        result.BeginInit();
-        //        result.CacheOption = BitmapCacheOption.OnLoad;
-        //        result.StreamSource = stream;
-        //        result.EndInit();
-        //        result.Freeze();
-        //        return result;
-        //    }
-        //}
+                var font = new Font(originalFont.FontFamily, newFontSize);
+                SizeF stringSize = graphics.MeasureString(text, font, (int)layoutSize.Width, stringFormat);
 
+                actualWidth  = (int)stringSize.Width;
+                actualHeight = (int)stringSize.Height;
+                newFontSize  = newFontSize - 1;
+            }
+
+            return new Font(originalFont.FontFamily, newFontSize + 1);
+        }
     }
 }

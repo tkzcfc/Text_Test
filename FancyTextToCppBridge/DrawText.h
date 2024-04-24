@@ -30,6 +30,8 @@ public:
 		int strokeColor,
 		int& dimensionsWidth,
 		int& dimensionsHeight,
-		int overflow);
+		int overflow,
+		bool enableWrap,
+		int* dataLen);
 };
 #endif
