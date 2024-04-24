@@ -8,7 +8,7 @@ namespace MyApp // Note: actual namespace depends on the project name.
     {
         static void Main(string[] args)
         {
-            var bitmapInfo = FancyText.DrawText.RenderText("AAAAA", "", 30, 0, 0, 0, 0, 0, 0, 0, 0);
+            var bitmapInfo = FancyText.DrawText.RenderText("AAAAA", "", 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, false);
 
             File.WriteAllBytes("out.png", bitmapInfo.data);
 

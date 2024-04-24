@@ -60,8 +60,22 @@ namespace FancyText
         /// <param name="dimensionsHeight"> 高度限制 </param>
         /// <param name="formatFlags">  </param>
         /// <param name="overflow"> 溢出处理 </param>
+        /// <param name="enableWrap"> 溢出处理 </param>
         /// <param name="outputRawData"> 是否返回原始数据,为false时返回png格式数据 </param>
-        public static BitmapInfo RenderText(string strText, string fontName, int fontSize, int fontStyle, int fontColor, int textAlign, int strokeSize, int strokeColor, int dimensionsWidth, int dimensionsHeight, int formatFlags, int overflow, bool outputRawData)
+        public static BitmapInfo RenderText(string strText, 
+            string fontName, 
+            int fontSize, 
+            int fontStyle, 
+            int fontColor, 
+            int textAlign, 
+            int strokeSize, 
+            int strokeColor, 
+            int dimensionsWidth, 
+            int dimensionsHeight,
+            int formatFlags, 
+            int overflow, 
+            bool enableWrap, 
+            bool outputRawData)
         {
             try
             {
@@ -138,7 +152,7 @@ namespace FancyText
                 }
                 stringFormat.FormatFlags = (StringFormatFlags)formatFlags;
 
-                var bitmap = ImageFromText(strText, font, Color.FromArgb(fontColor), Color.FromArgb(strokeColor), dimensionsWidth, dimensionsHeight, strokeSize, stringFormat, overflow);
+                var bitmap = ImageFromText(strText, font, Color.FromArgb(fontColor), Color.FromArgb(strokeColor), dimensionsWidth, dimensionsHeight, strokeSize, stringFormat, overflow, enableWrap);
 
                 var bitmapInfo = new BitmapInfo();
                 bitmapInfo.width = bitmap.Width;
@@ -196,22 +210,37 @@ namespace FancyText
             return result;
         }
 
-        private static Bitmap ImageFromText(string strText, Font fnt, Color clrFore, Color clrBack, int dimensionsWidth, int dimensionsHeight, int blurAmount, StringFormat stringFormat, int overflow)
+        private static Bitmap ImageFromText(string strText,
+            Font fnt, 
+            Color clrFore, 
+            Color clrBack, 
+            int dimensionsWidth, 
+            int dimensionsHeight, 
+            int blurAmount, 
+            StringFormat stringFormat,
+            int overflow,
+            bool enableWrap)
         {
             Bitmap? bmpOut = null;
             var sunNum = 255; //光晕的值
             using (var g = Graphics.FromHwnd(IntPtr.Zero))
             {
-                var sz = new SizeF(dimensionsWidth, dimensionsHeight);
+                var sz = new SizeF(Math.Max(dimensionsWidth - blurAmount, blurAmount + 1), Math.Max(dimensionsHeight - blurAmount, blurAmount + 1));
                 if (dimensionsHeight == 0 || dimensionsWidth == 0)
                 {
                     sz = g.MeasureString(strText, fnt, dimensionsWidth, stringFormat);
                 }
-
-                // 动态调整字体大小
-                if(overflow == 2)
+                else
                 {
-                    fnt = GetAdjustedFont(g, strText, fnt, sz, stringFormat);
+                    // 动态调整字体大小
+                    if (overflow == 2)
+                    {
+                        fnt = GetAdjustedFont(g, strText, fnt, sz, stringFormat, enableWrap);
+                    }
+                    else if(!enableWrap)
+                    {
+                        stringFormat.FormatFlags |= StringFormatFlags.NoWrap;
+                    }
                 }
 
                 using (var bmp = new Bitmap((int)sz.Width, (int)sz.Height))
@@ -251,29 +280,38 @@ namespace FancyText
             return bmpOut;
         }
 
-        static Font GetAdjustedFont(Graphics graphics, string text, Font originalFont, SizeF layoutSize, StringFormat stringFormat)
+        static Font GetAdjustedFont(Graphics graphics, string text, Font originalFont, SizeF layoutSize, StringFormat stringFormat, bool enableWrap)
         {
             var actualWidth = (int)layoutSize.Width + 1;
             var actualHeight = (int)layoutSize.Height + 1;
             var newFontSize = originalFont.Size + 1;
 
-            while (actualWidth > layoutSize.Width || actualHeight > layoutSize.Height)
+            var font = originalFont;
+            while (actualWidth > (int)layoutSize.Width || actualHeight > (int)layoutSize.Height)
             {
                 if (newFontSize <= 0)
                 {
-                    newFontSize = 1;
                     break;
                 }
 
-                var font = new Font(originalFont.FontFamily, newFontSize);
-                SizeF stringSize = graphics.MeasureString(text, font, (int)layoutSize.Width, stringFormat);
+                font = new Font(originalFont.FontFamily, newFontSize);
+
+                SizeF stringSize;
+                if (enableWrap)
+                {
+                    stringSize = graphics.MeasureString(text, font, (int)layoutSize.Width, stringFormat);
+                }
+                else
+                {
+                    stringSize = graphics.MeasureString(text, font, 0, stringFormat);
+                }
 
                 actualWidth  = (int)stringSize.Width;
                 actualHeight = (int)stringSize.Height;
                 newFontSize  = newFontSize - 1;
             }
 
-            return new Font(originalFont.FontFamily, newFontSize + 1);
+            return font;
         }
     }
 }

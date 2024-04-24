@@ -5,3 +5,9 @@ FancyTextToCppBridge/x64/
 Test/x64/Debug/
 CSTest/obj/Debug/
 CSTest/bin/
+CSTest/obj/Release/
+FancyTextToCppBridge/Release/
+FancyTextToCppBridge/Debug/
+Test/Release/
+FancyText/x64/
+FancyText/Release/

@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "DrawText.h"
+#include "FancyText.h"
 #include <memory>
 
 #using <System.Drawing.dll>
@@ -48,65 +48,70 @@ enum StringFormatFlags
     NoClip = 0x4000
 };
 
-unsigned char* DrawText::Render(const char* text,
-    const char* fontName,
-    int fontSize,
-    int fontStyle,
-    int fontColor,
-    int textAlign,
-    int strokeSize,
-    int strokeColor,
-    int& dimensionsWidth,
-    int& dimensionsHeight,
-    int overflow,
-    bool enableWrap,
-    int* dataLen)
+namespace FancyText
 {
-    System::String^ strText = gcnew System::String(text);
-    System::String^ strFontName = gcnew System::String(fontName);
-    int formatFlags = StringFormatFlags::MeasureTrailingSpaces;
-
-    // overflow 溢出处理
-    if (overflow == (int)Overflow::RESIZE_HEIGHT)
+    DLLEXPORT unsigned char* Render(const char* text,
+        const char* fontName,
+        int fontSize,
+        int fontStyle,
+        int fontColor,
+        int textAlign,
+        int strokeSize,
+        int strokeColor,
+        int& dimensionsWidth,
+        int& dimensionsHeight,
+        int overflow,
+        bool enableWrap,
+        bool outputRawData,
+        int* dataLen)
     {
-        dimensionsHeight = 0;
+        System::String^ strText = gcnew System::String(text);
+        System::String^ strFontName = gcnew System::String(fontName);
+        int formatFlags = StringFormatFlags::MeasureTrailingSpaces;
+
+        int width = dimensionsWidth;
+        int height = dimensionsHeight;
+
+        // overflow 溢出处理
+        if (overflow == (int)Overflow::RESIZE_HEIGHT)
+        {
+            height = 0;
+            enableWrap = true;
+        }
+
+        FancyText::BitmapInfo^ info = FancyText::DrawText::RenderText(strText,
+            strFontName,
+            fontSize,
+            fontStyle,
+            fontColor,
+            textAlign,
+            strokeSize,
+            strokeColor,
+            width,
+            height,
+            formatFlags,
+            overflow,
+            enableWrap,
+            outputRawData);
+
+        array<System::Byte>^ bytes = info->data;
+
+        if (dataLen)
+            *dataLen = bytes->Length;
+
+        dimensionsWidth = info->width;
+        dimensionsHeight = info->height;
+
+        if (bytes->Length == 0)
+        {
+            return NULL;
+        }
+        pin_ptr<System::Byte> pinnedArray = &bytes[0];
+
+        auto data = (unsigned char*)malloc(bytes->Length);
+        memcpy(data, pinnedArray, bytes->Length);
+
+
+        return data;
     }
-
-    if (!enableWrap)
-    {
-        formatFlags |= NoWrap;
-    }
-
-    int width = dimensionsWidth;
-    int height = dimensionsHeight;
-    FancyText::BitmapInfo^ info = FancyText::DrawText::RenderText(strText,
-        strFontName,
-        fontSize,
-        fontStyle,
-        fontColor,
-        textAlign,
-        strokeSize,
-        strokeColor,
-        width,
-        height,
-        formatFlags,
-        overflow,
-        false);
-
-    array<System::Byte>^ bytes = info->data;
-
-    if (dataLen)
-        *dataLen = bytes->Length;
-    
-    if (bytes->Length == 0)
-    {
-        return NULL;
-    }
-    pin_ptr<System::Byte> pinnedArray = &bytes[0];
-
-    auto data = (unsigned char*)malloc(bytes->Length);
-    memcpy(data, pinnedArray, bytes->Length);
-
-
-    return data;
 }
