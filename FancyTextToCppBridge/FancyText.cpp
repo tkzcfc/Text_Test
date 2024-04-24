@@ -63,7 +63,7 @@ namespace FancyText
         int overflow,
         bool enableWrap,
         bool outputRawData,
-        int* dataLen)
+        size_t* dataLen)
     {
         System::String^ strText = gcnew System::String(text);
         System::String^ strFontName = gcnew System::String(fontName);
@@ -97,7 +97,7 @@ namespace FancyText
         array<System::Byte>^ bytes = info->data;
 
         if (dataLen)
-            *dataLen = bytes->Length;
+            *dataLen = bytes->LongLength;
 
         dimensionsWidth = info->width;
         dimensionsHeight = info->height;
@@ -110,7 +110,6 @@ namespace FancyText
 
         auto data = (unsigned char*)malloc(bytes->Length);
         memcpy(data, pinnedArray, bytes->Length);
-
 
         return data;
     }

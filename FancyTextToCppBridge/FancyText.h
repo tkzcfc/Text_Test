@@ -7,6 +7,7 @@
 #ifndef DRAW_TEXT_H
 #define DRAW_TEXT_H
 
+#include <string>
 
 namespace FancyText
 {
@@ -32,7 +33,7 @@ namespace FancyText
 		int overflow,
 		bool enableWrap,
 		bool outputRawData,
-		int* dataLen);
+		size_t* dataLen);
 
 }
 
