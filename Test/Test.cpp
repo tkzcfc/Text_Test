@@ -2,10 +2,18 @@
 #include <fstream>
 #include "../FancyTextToCppBridge/FancyText.h"
 
-#if _DEBUG
-#pragma comment(lib,"../FancyText/x64/Debug/FancyTextToCppBridge.lib")
+#ifdef _WIN64
+	#ifdef _DEBUG
+	#pragma comment(lib,"../FancyText/x64/Debug/FancyTextToCppBridge.lib")
+	#else
+	#pragma comment(lib,"../FancyText/x64/Release/FancyTextToCppBridge.lib")
+	#endif
 #else
-#pragma comment(lib,"../FancyText/x64/Release/FancyTextToCppBridge.lib")
+	#ifdef _DEBUG
+	#pragma comment(lib,"../FancyText/Debug/FancyTextToCppBridge.lib")
+	#else
+	#pragma comment(lib,"../FancyText/Release/FancyTextToCppBridge.lib")
+	#endif
 #endif
 
 #define ALPHA_OFFSET 24
