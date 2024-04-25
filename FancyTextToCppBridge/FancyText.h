@@ -23,7 +23,7 @@ namespace FancyText
 	DLLEXPORT void SetMallocCallback(void* (*callback)(size_t));
 
 	DLLEXPORT unsigned char* Render(const wchar_t* text,
-		const char* fontName,
+		const wchar_t* fontName,
 		int fontSize,
 		int fontStyle,
 		int fontColor,

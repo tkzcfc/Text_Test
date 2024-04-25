@@ -62,7 +62,7 @@ namespace FancyText
     }
 
     DLLEXPORT unsigned char* Render(const wchar_t* text,
-        const char* fontName,
+        const wchar_t* fontName,
         int fontSize,
         int fontStyle,
         int fontColor,
