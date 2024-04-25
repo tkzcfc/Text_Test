@@ -5,8 +5,6 @@ using System.Drawing.Imaging;
 using System.Drawing.Text;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Windows.Controls;
-using static System.Net.Mime.MediaTypeNames;
 
 
 //enum TextAlign
@@ -79,10 +77,10 @@ namespace FancyText
         {
             try
             {
-                var font = new Font(fontName, fontSize, (System.Drawing.FontStyle)fontStyle);
+                var font = new Font(fontName, fontSize, (System.Drawing.FontStyle)fontStyle, GraphicsUnit.Pixel);
 
                 //// 定义绘制文本的区域和格式
-                StringFormat stringFormat = new StringFormat(); // 创建 StringFormat 对象
+                StringFormat stringFormat = StringFormat.GenericTypographic;
 
                 switch (textAlign)
                 {
@@ -228,7 +226,12 @@ namespace FancyText
                 var sz = new SizeF(Math.Max(dimensionsWidth - blurAmount, blurAmount + 1), Math.Max(dimensionsHeight - blurAmount, blurAmount + 1));
                 if (dimensionsHeight == 0 || dimensionsWidth == 0)
                 {
+                    var oldMaxWidth = sz.Width;
                     sz = g.MeasureString(strText, fnt, dimensionsWidth, stringFormat);
+                    if (dimensionsHeight == 0)
+                    {
+                        sz.Width = Math.Max(sz.Width, oldMaxWidth);
+                    }
                 }
                 else
                 {
