@@ -79,7 +79,7 @@ int main()
 	size_t dataLen = 0;
 
 	auto data = FancyText::Render(L"简体中文 繁體中文 Bahasa Indonesia Tiếng Việt ဗမာစာ हिन्दी 한국어 Español Português dansk български Nederlands Italiano Deutsch Français 日本語 Filipino ENGLISH ภาษาไทย বেঙ্গল 孟加拉",
-		"Arial", 
+		L"Arial", 
 		fontSize,
 		FancyText::FontStyle::Bold | FancyText::FontStyle::Italic,
 		argbToInt(100, 255, 0, 0), // 文字颜色

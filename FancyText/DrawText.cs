@@ -289,7 +289,6 @@ namespace FancyText
             var actualHeight = (int)layoutSize.Height + 1;
             var newFontSize = originalFont.Size + 1;
 
-            var font = originalFont;
             while (actualWidth > (int)layoutSize.Width || actualHeight > (int)layoutSize.Height)
             {
                 if (newFontSize <= 0)
@@ -297,7 +296,7 @@ namespace FancyText
                     break;
                 }
 
-                font = new Font(originalFont.FontFamily, newFontSize);
+                var font = new Font(originalFont.FontFamily, newFontSize, originalFont.Style, originalFont.Unit);
 
                 SizeF stringSize;
                 if (enableWrap)
@@ -311,10 +310,10 @@ namespace FancyText
 
                 actualWidth  = (int)stringSize.Width;
                 actualHeight = (int)stringSize.Height;
-                newFontSize  = newFontSize - 1;
+                newFontSize--;
             }
 
-            return font;
+            return new Font(originalFont.FontFamily, newFontSize, originalFont.Style, originalFont.Unit);
         }
     }
 }
